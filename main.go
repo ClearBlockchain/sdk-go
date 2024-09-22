@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"log"
 	"os"
-    "github.com/glide/sdk-go/pkg/glide"
-    "github.com/glide/sdk-go/pkg/types"
+	"github.com/glide/sdk-go/pkg/glide"
+	"github.com/glide/sdk-go/pkg/types"
 )
 
 func SetupTestEnvironment() types.GlideSdkSettings {
@@ -24,6 +24,9 @@ func SetupTestEnvironment() types.GlideSdkSettings {
     if os.Getenv("GLIDE_API_BASE_URL") == "" {
         log.Fatal("GLIDE_API_BASE_URL environment variable is not set")
     }
+    if os.Getenv("REPORT_METRIC_URL") == "" {
+        fmt.Print("REPORT_METRIC_URL environment variable is not set")
+    }
     return types.GlideSdkSettings{
         ClientID:     os.Getenv("GLIDE_CLIENT_ID"),
         ClientSecret: os.Getenv("GLIDE_CLIENT_SECRET"),
@@ -37,6 +40,19 @@ func SetupTestEnvironment() types.GlideSdkSettings {
 
 func main() {
 	// Example of how to use the SDK
+    fmt.Println("Hello from Glide SDK")
+    // report := types.MetricInfo{
+    //     SessionId:  "session12223",
+    //     MetricName: "UserAction",
+    //     Timestamp:  time.Now(),
+    //     Api:        "example-api",
+    //     ClientId:   "your-client-id",
+    //     Operator:   "operator1",
+    // }
+    // err := glide.ReportMetric(report)
+    // if err != nil {
+    //     log.Fatalf("Failed to report metric: %v", err)
+    // }
 	settings := SetupTestEnvironment()
 	glideClient, err := glide.NewGlideClient(settings)
 	if err != nil {

@@ -36,7 +36,7 @@ func TestNumberVerify(t *testing.T) {
 		phoneNumber := "+555123456789"
 		client, err := glideClient.NumberVerify.For(types.NumberVerifyClientForParams{PhoneNumber: &phoneNumber, Code: code})
 		assert.NoError(t, err)
-		verify, err := client.VerifyNumber()
+		verify, err := client.VerifyNumber(nil, types.ApiConfig{SessionIdentifier: "session77"})
 		assert.NoError(t, err)
 		t.Logf("Check verify: %+v", verify)
 		assert.Equal(t, true, verify.DevicePhoneNumberVerified, "Response should have devicePhoneNumberVerified=true")

@@ -7,10 +7,12 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
+	"sync"
 	"time"
-	"github.com/google/uuid"
+
 	"github.com/glide/sdk-go/pkg/types"
 	"github.com/glide/sdk-go/pkg/utils"
+	"github.com/google/uuid"
 )
 
 type NumberVerifyAuthUrlInput struct {
@@ -82,7 +84,15 @@ func (c *NumberVerifyUserClient) StartSession() error {
 	return nil
 }
 
-func (c *NumberVerifyUserClient) VerifyNumber(number ...string) (*NumberVerifyFuncResponse, error) {
+func (c *NumberVerifyUserClient) VerifyNumber(number *string, conf types.ApiConfig) (*NumberVerifyFuncResponse, error) {
+	var wg sync.WaitGroup
+	if conf.SessionIdentifier != "" {
+		operator, err := utils.GetOperator(c.session)
+		if err != nil {
+		    fmt.Errorf("cannot report metric since failed to get operator: %w", err)
+        }
+		c.reportNumberVerifyMetric(&wg, conf.SessionIdentifier, "Glide numberVerify start function", operator)
+	}
 	if c.session == nil {
 		return nil, errors.New("[GlideClient] Session is required to verify a number")
 	}
@@ -92,17 +102,11 @@ func (c *NumberVerifyUserClient) VerifyNumber(number ...string) (*NumberVerifyFu
 	}
 
 	var phoneNumber string
-	if len(number) > 0 && number[0] != "" {
-		phoneNumber = number[0]
+	if number != nil && *number != "" {
+		phoneNumber = *number
 	} else if c.phoneNumber != nil {
 		phoneNumber = *c.phoneNumber
-	}
-
-	// phoneNumber := number
-	// if phoneNumber == "" {
-	// 	phoneNumber = c.phoneNumber
-	// }
-	if phoneNumber == "" {
+	} else {
 		return nil, errors.New("[GlideClient] Phone number is required to verify a number")
 	}
 
@@ -124,12 +128,20 @@ func (c *NumberVerifyUserClient) VerifyNumber(number ...string) (*NumberVerifyFu
 		return nil, fmt.Errorf("failed to verify number: %w", err)
 	}
 
-	// You might want to process the response body here
-    fmt.Println(resp)
 	var result NumberVerifyFuncResponse
 	if err := resp.JSON(&result); err != nil {
 		return nil, fmt.Errorf("[GlideClient] Failed to parse response: %w", err)
 	}
+	// Metric reporting for success/failure
+    if conf.SessionIdentifier != "" {
+        c.reportNumberVerifyMetric(&wg, conf.SessionIdentifier, "Glide success", "")
+        if result.DevicePhoneNumberVerified {
+            c.reportNumberVerifyMetric(&wg, conf.SessionIdentifier, "Glide verified", "")
+        } else {
+            c.reportNumberVerifyMetric(&wg, conf.SessionIdentifier, "Glide unverified", "")
+        }
+    }
+	wg.Wait()
 	return &result, nil
 }
 
@@ -177,6 +189,22 @@ func (c *NumberVerifyClient) For(params types.NumberVerifyClientForParams) (*Num
 		return nil, err
 	}
 	return client, nil
+}
+
+func (c *NumberVerifyUserClient) reportNumberVerifyMetric(wg *sync.WaitGroup, sessionId, metricName string, operator string) {
+	metric := types.MetricInfo{
+		Operator:   operator,
+		Timestamp:  time.Now(),
+		SessionId:  sessionId,
+		MetricName: metricName,
+		Api:        "number-verify",
+		ClientId:   c.settings.ClientID,
+	}
+	wg.Add(1)
+	go func(m types.MetricInfo) {
+		defer wg.Done()
+		utils.ReportMetric(m)
+	}(metric)
 }
 
 func (c *NumberVerifyClient) GetHello() (string) {

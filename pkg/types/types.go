@@ -1,5 +1,7 @@
 package types
 
+import "time"
+
 // GlideSdkSettings represents the settings for the Glide SDK
 type GlideSdkSettings struct {
     ClientID     string
@@ -24,6 +26,7 @@ type Session struct {
 
 // ApiConfig represents the configuration for API calls
 type ApiConfig struct {
+	SessionIdentifier string
     Session *Session
 }
 
@@ -99,3 +102,20 @@ type SimSwapRetrieveDateParams struct {
 func (PhoneIdentifier) isUserIdentifier()  {}
 func (IpIdentifier) isUserIdentifier()     {}
 func (UserIdIdentifier) isUserIdentifier() {}
+
+
+type MetricInfo struct {
+	Operator    string    `json:"operator,omitempty"`
+	Timestamp   time.Time `json:"timestamp"`
+	SessionId   string    `json:"sessionId"`
+	MetricName  string    `json:"metricName"`
+	Api         string    `json:"api"`
+	ClientId    string    `json:"clientId"`
+}
+
+type TokenData struct {
+	Ext struct {
+		Operator string `json:"operator"`
+	} `json:"ext"`
+}
+

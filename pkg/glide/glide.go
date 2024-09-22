@@ -2,10 +2,12 @@ package glide
 
 import (
 	"errors"
+	"fmt"
 	"os"
 
 	"github.com/glide/sdk-go/pkg/services"
 	"github.com/glide/sdk-go/pkg/types"
+	"github.com/glide/sdk-go/pkg/utils"
 )
 
 // GlideClient is the main client for the SDK
@@ -15,6 +17,32 @@ type GlideClient struct {
 	MagicAuth   *services.MagicAuthClient
 	SimSwap     *services.SimSwapClient
 	NumberVerify *services.NumberVerifyClient
+}
+
+func ReportMetric(report types.MetricInfo) error{
+	if os.Getenv("REPORT_METRIC_URL") == "" {
+		return fmt.Errorf("missing process env REPORT_METRIC_URL")
+	}
+	if report.ClientId == "" {
+        report.ClientId = os.Getenv("GLIDE_CLIENT_ID")
+    }
+	if report.ClientId == "" {
+		return fmt.Errorf("missing ClientId")
+	}
+	if report.SessionId == "" {
+		return fmt.Errorf("missing SessionId")
+	}
+	if report.MetricName == "" {
+		return fmt.Errorf("missing MetricName")
+	}
+	if report.Api == "" {
+		return fmt.Errorf("missing Api")
+	}
+	if report.Timestamp.IsZero() {
+		return fmt.Errorf("missing Timestamp")
+	}
+    utils.ReportMetric(report)
+	return nil
 }
 
 func NewGlideClient(settings types.GlideSdkSettings) (*GlideClient, error) {
