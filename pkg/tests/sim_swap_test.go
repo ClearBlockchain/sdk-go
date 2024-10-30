@@ -1,10 +1,10 @@
 package tests
 
 import (
-    "testing"
-    "github.com/stretchr/testify/assert"
-    "github.com/glide/sdk-go/pkg/types"
-    "github.com/glide/sdk-go/pkg/glide"
+	"testing"
+	"github.com/ClearBlockchain/sdk-go/pkg/glide"
+	"github.com/ClearBlockchain/sdk-go/pkg/types"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestSimSwapClient(t *testing.T) {
@@ -28,18 +28,21 @@ func TestSimSwapClient(t *testing.T) {
 
     t.Run("RetrieveDate", func(t *testing.T) {
         userClient, _ := client.SimSwap.For(types.PhoneIdentifier{PhoneNumber: "+555123456789"})
-        response, err := userClient.RetrieveDate(types.SimSwapRetrieveDateParams{PhoneNumber: "+555123456789"}, types.ApiConfig{})
+        response, err := userClient.RetrieveDate(types.SimSwapRetrieveDateParams{}, types.ApiConfig{})
         assert.NoError(t, err, "RetrieveDate should not return an error")
         assert.NotNil(t, response, "Response should not be nil")
         t.Logf("RetrieveDate response: %+v", response)
+        t.Logf("LatestSimChange: %s", response.LatestSimChange)
+        t.Logf("LatestSimChange (parsed): %s", response.LatestSimChange)
         // Add more specific assertions based on the expected response
     })
 
-    // t.Run("GetConsentURL", func(t *testing.T) {
-    //     userClient, _ := client.SimSwap.For(types.PhoneIdentifier{PhoneNumber: "+555123456789"})
-    //     consentURL := userClient.GetConsentURL()
-    //     assert.NotEmpty(t, consentURL, "ConsentURL should not be empty")
-    // })
+    t.Run("GetConsentURL", func(t *testing.T) {
+        userClient, _ := client.SimSwap.For(types.PhoneIdentifier{PhoneNumber: "+555123456789"})
+        if userClient.RequiresConsent {
+            consentURL := userClient.GetConsentURL()
+            assert.NotEmpty(t, consentURL, "ConsentURL should not be empty")        }
+    })
 
     t.Run("PollAndWaitForSession", func(t *testing.T) {
         userClient, _ := client.SimSwap.For(types.PhoneIdentifier{PhoneNumber: "+555123456789"})

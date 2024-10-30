@@ -1,10 +1,12 @@
 package tests
 
 import (
+	"fmt"
 	"net/url"
 	"testing"
-	"github.com/glide/sdk-go/pkg/glide"
-	"github.com/glide/sdk-go/pkg/types"
+
+	"github.com/ClearBlockchain/sdk-go/pkg/glide"
+	"github.com/ClearBlockchain/sdk-go/pkg/types"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -13,7 +15,8 @@ func TestNumberVerify(t *testing.T) {
 	glideClient, err := glide.NewGlideClient(settings)
 	assert.NoError(t, err)
 	t.Run("should work", func(t *testing.T) {
-	    authUrl, err := glideClient.NumberVerify.GetAuthURL();
+	    authUrl, err := glideClient.NumberVerify.GetAuthURL()
+		fmt.Println("Open this URL on the user's device: ", authUrl)
 		assert.NoError(t, err)
 		assert.NotNil(t, authUrl)
 		assert.NotEmpty(t, authUrl)
@@ -36,7 +39,7 @@ func TestNumberVerify(t *testing.T) {
 		phoneNumber := "+555123456789"
 		client, err := glideClient.NumberVerify.For(types.NumberVerifyClientForParams{PhoneNumber: &phoneNumber, Code: code})
 		assert.NoError(t, err)
-		verify, err := client.VerifyNumber()
+		verify, err := client.VerifyNumber(nil, types.ApiConfig{SessionIdentifier: "session77"})
 		assert.NoError(t, err)
 		t.Logf("Check verify: %+v", verify)
 		assert.Equal(t, true, verify.DevicePhoneNumberVerified, "Response should have devicePhoneNumberVerified=true")

@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"log"
 	"os"
-    "github.com/glide/sdk-go/pkg/glide"
-    "github.com/glide/sdk-go/pkg/types"
+	"github.com/ClearBlockchain/sdk-go/pkg/glide"
+	"github.com/ClearBlockchain/sdk-go/pkg/types"
 )
 
 func SetupTestEnvironment() types.GlideSdkSettings {
@@ -16,13 +16,16 @@ func SetupTestEnvironment() types.GlideSdkSettings {
         log.Fatal("GLIDE_CLIENT_SECRET environment variable is not set")
     }
     if os.Getenv("GLIDE_REDIRECT_URI") == "" {
-        log.Fatal("GLIDE_REDIRECT_URI environment variable is not set")
+        fmt.Printf("GLIDE_REDIRECT_URI environment variable is not set")
     }
     if os.Getenv("GLIDE_AUTH_BASE_URL") == "" {
-        log.Fatal("GLIDE_AUTH_BASE_URL environment variable is not set")
+        fmt.Printf("GLIDE_AUTH_BASE_URL environment variable is not set")
     }
     if os.Getenv("GLIDE_API_BASE_URL") == "" {
-        log.Fatal("GLIDE_API_BASE_URL environment variable is not set")
+        fmt.Printf("GLIDE_API_BASE_URL environment variable is not set")
+    }
+    if os.Getenv("REPORT_METRIC_URL") == "" {
+        fmt.Printf("REPORT_METRIC_URL environment variable is not set")
     }
     return types.GlideSdkSettings{
         ClientID:     os.Getenv("GLIDE_CLIENT_ID"),
@@ -37,12 +40,12 @@ func SetupTestEnvironment() types.GlideSdkSettings {
 
 func main() {
 	// Example of how to use the SDK
+    fmt.Println("Hello from Glide SDK")
 	settings := SetupTestEnvironment()
 	glideClient, err := glide.NewGlideClient(settings)
 	if err != nil {
 		log.Fatalf("Failed to create client: %v", err)
 	}
-
 	// Example SDK usage
 	magicHelloRes := glideClient.MagicAuth.GetHello()
 	magicHelloRes = magicHelloRes + " from MagicAuth Glide SDK"

@@ -6,14 +6,16 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
+	"sync"
 	"time"
-	"github.com/glide/sdk-go/pkg/types"
-	"github.com/glide/sdk-go/pkg/utils"
+	"github.com/ClearBlockchain/sdk-go/pkg/types"
+	"github.com/ClearBlockchain/sdk-go/pkg/utils"
 )
 
 type MagicAuthStartResponse struct {
 	Type    string `json:"type"`
 	AuthURL string `json:"authUrl,omitempty"`
+	OperatorId string `json:"operatorId,omitempty"`
 }
 
 type MagicAuthCheckResponse struct {
@@ -32,8 +34,12 @@ func NewMagicAuthClient(settings types.GlideSdkSettings) *MagicAuthClient {
 }
 
 func (c *MagicAuthClient) StartAuth(props types.MagicAuthStartProps, conf types.ApiConfig) (*MagicAuthStartResponse, error) {
+	var wg sync.WaitGroup
 	if c.settings.Internal.APIBaseURL == "" {
 		return nil, fmt.Errorf("[GlideClient] internal.apiBaseUrl is unset")
+	}
+	if conf.SessionIdentifier != "" {
+		c.reportMagicAuthMetric(&wg, conf.SessionIdentifier, "Glide start", "")
 	}
 
 	session, err := c.getSession(conf.Session)
@@ -47,7 +53,15 @@ func (c *MagicAuthClient) StartAuth(props types.MagicAuthStartProps, conf types.
 	} else {
 		data["email"] = props.Email
 	}
-
+	if props.RedirectURL != "" {
+		data["redirectUrl"] = props.RedirectURL
+	}
+	if props.State != "" {
+		data["state"] = props.State
+	}
+	if props.FallbackChannel != "" {
+		data["fallbackChannel"] = string(props.FallbackChannel)
+	}
 	jsonData, err := json.Marshal(data)
 	if err != nil {
 		return nil, err
@@ -68,20 +82,29 @@ func (c *MagicAuthClient) StartAuth(props types.MagicAuthStartProps, conf types.
 
 	var result MagicAuthStartResponse
 	if err := resp.JSON(&result); err != nil {
-           return nil, fmt.Errorf("[GlideClient] Failed to parse response: %w", err)
-    }
+		return nil, fmt.Errorf("[GlideClient] Failed to parse response: %w", err)
+	}
 
+	if conf.SessionIdentifier != "" && result.OperatorId!="" {
+		c.reportMagicAuthMetric(&wg, conf.SessionIdentifier, "Glide verificationStartRes", result.OperatorId)
+	}
+	wg.Wait()
 	return &result, nil
 }
 
-func (c *MagicAuthClient) VerifyAuth(props types.MagicAuthVerifyProps, conf types.ApiConfig) (bool, error) {
+type MagicAuthVerifyRes struct {
+	Verified bool `json:"verified"`
+}
+
+func (c *MagicAuthClient) VerifyAuth(props types.MagicAuthVerifyProps, conf types.ApiConfig) (*MagicAuthVerifyRes, error) {
+	var wg sync.WaitGroup
 	if c.settings.Internal.APIBaseURL == "" {
-		return false, fmt.Errorf("[GlideClient] internal.apiBaseUrl is unset")
+		return nil, fmt.Errorf("[GlideClient] internal.apiBaseUrl is unset")
 	}
 
 	session, err := c.getSession(conf.Session)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 
 	data := map[string]string{}
@@ -98,7 +121,7 @@ func (c *MagicAuthClient) VerifyAuth(props types.MagicAuthVerifyProps, conf type
 
 	jsonData, err := json.Marshal(data)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 
 	resp, err := utils.FetchX(c.settings.Internal.APIBaseURL+"/magic-auth/verification/check", utils.FetchXInput{
@@ -111,15 +134,24 @@ func (c *MagicAuthClient) VerifyAuth(props types.MagicAuthVerifyProps, conf type
 	})
 
 	if err != nil {
-		return false, fmt.Errorf("[GlideClient]: [magic-auth] FetchX failed for VerifyAuth : %w", err)
+		return nil, fmt.Errorf("[GlideClient]: [magic-auth] FetchX failed for VerifyAuth : %w", err)
 	}
 
-	var result bool
+	var result MagicAuthVerifyRes
 	if err := resp.JSON(&result); err != nil {
-                   return false, fmt.Errorf("[GlideClient] Failed to parse response in VerifyAuth: %w", err)
-    }
+		return nil, fmt.Errorf("[GlideClient] Failed to parse response in VerifyAuth: %w", err)
+	}
 
-	return result, nil
+	if conf.SessionIdentifier != "" {
+		c.reportMagicAuthMetric(&wg, conf.SessionIdentifier, "Glide success", "")
+		if result.Verified {
+			c.reportMagicAuthMetric(&wg, conf.SessionIdentifier, "Glide verified", "")
+		} else if !result.Verified {
+			c.reportMagicAuthMetric(&wg, conf.SessionIdentifier, "Glide unverified", "")
+	  }
+	}
+	wg.Wait()
+	return &result, nil
 }
 
 func (c *MagicAuthClient) getSession(confSession *types.Session) (*types.Session, error) {
@@ -128,9 +160,9 @@ func (c *MagicAuthClient) getSession(confSession *types.Session) (*types.Session
 	}
 
 	if c.session != nil && c.session.ExpiresAt > time.Now().Add(time.Minute).Unix() && contains(c.session.Scopes, "magic-auth") {
-            fmt.Println("Debug: Using cached session")
-            return c.session, nil
-    }
+		fmt.Println("Debug: Using cached session")
+		return c.session, nil
+	}
 
 	session, err := c.generateNewSession()
 	if err != nil {
@@ -179,6 +211,23 @@ func (c *MagicAuthClient) generateNewSession() (*types.Session, error) {
 	}, nil
 }
 
-func (c *MagicAuthClient) GetHello() (string) {
+func (c *MagicAuthClient) reportMagicAuthMetric(wg *sync.WaitGroup, sessionId, metricName string, operator string) {
+	fmt.Println("in reportMagicAuthMetric", metricName)
+	metric := types.MetricInfo{
+		Operator:   operator,
+		Timestamp:  time.Now(),
+		SessionId:  sessionId,
+		MetricName: metricName,
+		Api:        "magic-auth",
+		ClientId:   c.settings.ClientID,
+	}
+	wg.Add(1)
+	go func(m types.MetricInfo) {
+		defer wg.Done()
+		utils.ReportMetric(m)
+	}(metric)
+}
+
+func (c *MagicAuthClient) GetHello() string {
 	return "Hello"
 }

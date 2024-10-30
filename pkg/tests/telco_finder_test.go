@@ -2,9 +2,9 @@ package tests
 
 import (
 	"testing"
-	"github.com/glide/sdk-go/pkg/types"
+	"github.com/ClearBlockchain/sdk-go/pkg/types"
 	"github.com/stretchr/testify/assert"
-    "github.com/glide/sdk-go/pkg/glide"
+    "github.com/ClearBlockchain/sdk-go/pkg/glide"
 )
 
 

@@ -1,5 +1,7 @@
 package types
 
+import "time"
+
 // GlideSdkSettings represents the settings for the Glide SDK
 type GlideSdkSettings struct {
     ClientID     string
@@ -24,6 +26,7 @@ type Session struct {
 
 // ApiConfig represents the configuration for API calls
 type ApiConfig struct {
+	SessionIdentifier string
     Session *Session
 }
 
@@ -69,7 +72,19 @@ type UserIdentifier interface {
 type MagicAuthStartProps struct {
 	Email       string `json:"email,omitempty"`
 	PhoneNumber string `json:"phoneNumber,omitempty"`
+    State      string `json:"state,omitempty"`
+    RedirectURL string `json:"redirectURL,omitempty"`
+    FallbackChannel NoFallback `json:"fallbackChannel,omitempty"`
 }
+
+type NoFallback string
+type FallbackVerificationChannel string
+
+const (
+    SMS         FallbackVerificationChannel = "SMS"
+    EMAIL       FallbackVerificationChannel = "EMAIL"
+    NO_FALLBACK FallbackVerificationChannel = "NO_FALLBACK"
+)
 
 type MagicAuthVerifyProps struct {
 	Email       string `json:"email,omitempty"`
@@ -99,3 +114,20 @@ type SimSwapRetrieveDateParams struct {
 func (PhoneIdentifier) isUserIdentifier()  {}
 func (IpIdentifier) isUserIdentifier()     {}
 func (UserIdIdentifier) isUserIdentifier() {}
+
+
+type MetricInfo struct {
+	Operator    string    `json:"operator,omitempty"`
+	Timestamp   time.Time `json:"timestamp"`
+	SessionId   string    `json:"sessionId"`
+	MetricName  string    `json:"metricName"`
+	Api         string    `json:"api"`
+	ClientId    string    `json:"clientId"`
+}
+
+type TokenData struct {
+	Ext struct {
+		Operator string `json:"operator"`
+	} `json:"ext"`
+}
+
