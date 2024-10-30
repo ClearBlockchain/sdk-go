@@ -15,6 +15,7 @@ import (
 type MagicAuthStartResponse struct {
 	Type    string `json:"type"`
 	AuthURL string `json:"authUrl,omitempty"`
+	FlatAuthURL string `json:"flatAuthUrl,omitempty"`
 	OperatorId string `json:"operatorId,omitempty"`
 }
 
