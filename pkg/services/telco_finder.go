@@ -7,8 +7,8 @@ import (
 	"net/url"
 	"strings"
 	"time"
-	"github.com/glide/sdk-go/pkg/types"
-	"github.com/glide/sdk-go/pkg/utils"
+	"github.com/ClearBlockchain/sdk-go/pkg/types"
+	"github.com/ClearBlockchain/sdk-go/pkg/utils"
 )
 
 type TelcoFinderClient struct {

@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/glide/sdk-go/pkg/types"
+	"github.com/ClearBlockchain/sdk-go/pkg/types"
 )
 
 // HTTPResponseError represents an HTTP error response

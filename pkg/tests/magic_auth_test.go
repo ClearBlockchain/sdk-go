@@ -1,9 +1,10 @@
 package tests
 
 import (
+	"net/http"
 	"testing"
-	"github.com/glide/sdk-go/pkg/glide"
-	"github.com/glide/sdk-go/pkg/types"
+	"github.com/ClearBlockchain/sdk-go/pkg/glide"
+	"github.com/ClearBlockchain/sdk-go/pkg/types"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -20,12 +21,19 @@ func TestMagicAuth(t *testing.T) {
 		assert.Equal(t, "MAGIC", magicRes.Type)
 		assert.NotEmpty(t, magicRes.AuthURL)
 		t.Logf("Magic auth StartAuth response: %+v", magicRes)
-		res, _ := MakeRawHttpRequestFollowRedirectChain(magicRes.AuthURL)
-		token := res.Query.Get("token")
-		t.Logf("Magic auth response: %+v", res)
+		tokenRes, err := http.Get(magicRes.AuthURL)
+		if err != nil {
+			// handle error
+			t.Errorf("Error making request: %v", err)
+		}
+		t.Logf("Magic auth token request res: %+v", tokenRes)
+		defer tokenRes.Body.Close()
+		token := tokenRes.Header.Get("token")
+		if token == "" {
+			t.Errorf("Token not found in response")
+		}
 		assert.NoError(t, err)
 		assert.NotEmpty(t, token)
-
 		verifyRes, err := glideClient.MagicAuth.VerifyAuth(types.MagicAuthVerifyProps{
 			PhoneNumber: "+555123456789",
 			Token:       token,

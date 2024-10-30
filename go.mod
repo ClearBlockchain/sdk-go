@@ -1,4 +1,4 @@
-module github.com/glide/sdk-go
+module github.com/ClearBlockchain/sdk-go
 
 go 1.22.3
 

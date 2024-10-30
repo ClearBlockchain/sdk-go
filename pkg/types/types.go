@@ -72,7 +72,19 @@ type UserIdentifier interface {
 type MagicAuthStartProps struct {
 	Email       string `json:"email,omitempty"`
 	PhoneNumber string `json:"phoneNumber,omitempty"`
+    State      string `json:"state,omitempty"`
+    RedirectURL string `json:"redirectURL,omitempty"`
+    FallbackChannel NoFallback `json:"fallbackChannel,omitempty"`
 }
+
+type NoFallback string
+type FallbackVerificationChannel string
+
+const (
+    SMS         FallbackVerificationChannel = "SMS"
+    EMAIL       FallbackVerificationChannel = "EMAIL"
+    NO_FALLBACK FallbackVerificationChannel = "NO_FALLBACK"
+)
 
 type MagicAuthVerifyProps struct {
 	Email       string `json:"email,omitempty"`

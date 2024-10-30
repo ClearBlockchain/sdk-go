@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/glide/sdk-go/pkg/services"
-	"github.com/glide/sdk-go/pkg/types"
-	"github.com/glide/sdk-go/pkg/utils"
+	"github.com/ClearBlockchain/sdk-go/pkg/services"
+	"github.com/ClearBlockchain/sdk-go/pkg/types"
+	"github.com/ClearBlockchain/sdk-go/pkg/utils"
 )
 
 // GlideClient is the main client for the SDK

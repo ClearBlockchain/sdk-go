@@ -10,8 +10,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/glide/sdk-go/pkg/types"
-	"github.com/glide/sdk-go/pkg/utils"
+	"github.com/ClearBlockchain/sdk-go/pkg/types"
+	"github.com/ClearBlockchain/sdk-go/pkg/utils"
 	"github.com/google/uuid"
 )
 
@@ -20,7 +20,7 @@ type NumberVerifyAuthUrlInput struct {
 }
 
 
-type NumberVerifyFuncResponse struct {
+type NumberVerifyResponse struct {
 	DevicePhoneNumberVerified bool
 }
 
@@ -84,7 +84,7 @@ func (c *NumberVerifyUserClient) StartSession() error {
 	return nil
 }
 
-func (c *NumberVerifyUserClient) VerifyNumber(number *string, conf types.ApiConfig) (*NumberVerifyFuncResponse, error) {
+func (c *NumberVerifyUserClient) VerifyNumber(number *string, conf types.ApiConfig) (*NumberVerifyResponse, error) {
 	var wg sync.WaitGroup
 	if conf.SessionIdentifier != "" {
 		operator, err := utils.GetOperator(c.session)
@@ -128,7 +128,7 @@ func (c *NumberVerifyUserClient) VerifyNumber(number *string, conf types.ApiConf
 		return nil, fmt.Errorf("failed to verify number: %w", err)
 	}
 
-	var result NumberVerifyFuncResponse
+	var result NumberVerifyResponse
 	if err := resp.JSON(&result); err != nil {
 		return nil, fmt.Errorf("[GlideClient] Failed to parse response: %w", err)
 	}

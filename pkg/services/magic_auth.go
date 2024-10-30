@@ -8,8 +8,8 @@ import (
 	"strings"
 	"sync"
 	"time"
-	"github.com/glide/sdk-go/pkg/types"
-	"github.com/glide/sdk-go/pkg/utils"
+	"github.com/ClearBlockchain/sdk-go/pkg/types"
+	"github.com/ClearBlockchain/sdk-go/pkg/utils"
 )
 
 type MagicAuthStartResponse struct {
@@ -53,7 +53,15 @@ func (c *MagicAuthClient) StartAuth(props types.MagicAuthStartProps, conf types.
 	} else {
 		data["email"] = props.Email
 	}
-
+	if props.RedirectURL != "" {
+		data["redirectUrl"] = props.RedirectURL
+	}
+	if props.State != "" {
+		data["state"] = props.State
+	}
+	if props.FallbackChannel != "" {
+		data["fallbackChannel"] = string(props.FallbackChannel)
+	}
 	jsonData, err := json.Marshal(data)
 	if err != nil {
 		return nil, err

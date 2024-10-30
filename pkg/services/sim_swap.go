@@ -3,8 +3,8 @@ package services
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/glide/sdk-go/pkg/types"
-	"github.com/glide/sdk-go/pkg/utils"
+	"github.com/ClearBlockchain/sdk-go/pkg/types"
+	"github.com/ClearBlockchain/sdk-go/pkg/utils"
 	"encoding/base64"
     "net/url"
     "strings"
