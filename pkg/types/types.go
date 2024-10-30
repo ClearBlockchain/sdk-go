@@ -95,6 +95,17 @@ type MagicAuthVerifyProps struct {
 
 // number verify
 
+type NumberVerifyAuthUrlInput struct {
+    State *string `json:"state"`
+    UseDevNumber string `json:"useDevNumber,omitempty"`
+}
+
+
+type NumberVerifyResponse struct {
+	DevicePhoneNumberVerified bool
+}
+
+
 type NumberVerifyClientForParams struct {
     Code        string
     PhoneNumber *string

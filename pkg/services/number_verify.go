@@ -15,15 +15,6 @@ import (
 	"github.com/google/uuid"
 )
 
-type NumberVerifyAuthUrlInput struct {
-    State *string
-}
-
-
-type NumberVerifyResponse struct {
-	DevicePhoneNumberVerified bool
-}
-
 type NumberVerifyUserClient struct {
     settings types.GlideSdkSettings
 	session  *types.Session
@@ -52,8 +43,6 @@ func (c *NumberVerifyUserClient) StartSession() error {
 	data := url.Values{}
 	data.Set("grant_type", "authorization_code")
 	data.Set("code", c.code)
-	// TODO: Set the redirect_uri to the actual redirect uri
-	data.Set("redirect_uri", "https://dev.gateway-x.io/dev-redirector/callback")
     resp, err := utils.FetchX(c.settings.Internal.AuthBaseURL+"/oauth2/token", utils.FetchXInput{
         Method: "POST",
         Headers: map[string]string{
@@ -84,7 +73,11 @@ func (c *NumberVerifyUserClient) StartSession() error {
 	return nil
 }
 
-func (c *NumberVerifyUserClient) VerifyNumber(number *string, conf types.ApiConfig) (*NumberVerifyResponse, error) {
+func (c *NumberVerifyUserClient) GetOperator() (string, error) {
+    return utils.GetOperator(c.session)
+}
+
+func (c *NumberVerifyUserClient) VerifyNumber(number *string, conf types.ApiConfig) (*types.NumberVerifyResponse, error) {
 	var wg sync.WaitGroup
 	if conf.SessionIdentifier != "" {
 		operator, err := utils.GetOperator(c.session)
@@ -128,7 +121,7 @@ func (c *NumberVerifyUserClient) VerifyNumber(number *string, conf types.ApiConf
 		return nil, fmt.Errorf("failed to verify number: %w", err)
 	}
 
-	var result NumberVerifyResponse
+	var result types.NumberVerifyResponse
 	if err := resp.JSON(&result); err != nil {
 		return nil, fmt.Errorf("[GlideClient] Failed to parse response: %w", err)
 	}
@@ -153,7 +146,7 @@ func NewNumberVerifyClient(settings types.GlideSdkSettings) *NumberVerifyClient 
 	return &NumberVerifyClient{settings: settings}
 }
 
-func (c *NumberVerifyClient) GetAuthURL(opts ...NumberVerifyAuthUrlInput) (string, error) {
+func (c *NumberVerifyClient) GetAuthURL(opts ...types.NumberVerifyAuthUrlInput) (string, error) {
 	if c.settings.Internal.AuthBaseURL == "" {
 		return "", errors.New("[GlideClient] internal.authBaseUrl is unset")
 	}
@@ -178,6 +171,10 @@ func (c *NumberVerifyClient) GetAuthURL(opts ...NumberVerifyAuthUrlInput) (strin
 	params.Set("state", state)
 	params.Set("nonce", nonce)
 	params.Set("max_age", "0")
+	if len(opts) > 0 && opts[0].UseDevNumber != "" {
+		params.Set("login_hint", "tel:"+opts[0].UseDevNumber)
+	}
+	fmt.Printf("params: %v", params)
 
 	return c.settings.Internal.AuthBaseURL + "/oauth2/auth?" + params.Encode(), nil
 }

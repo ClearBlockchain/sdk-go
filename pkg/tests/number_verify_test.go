@@ -15,7 +15,8 @@ func TestNumberVerify(t *testing.T) {
 	glideClient, err := glide.NewGlideClient(settings)
 	assert.NoError(t, err)
 	t.Run("should work", func(t *testing.T) {
-	    authUrl, err := glideClient.NumberVerify.GetAuthURL()
+		phoneNumber := "+555123456789"
+	    authUrl, err := glideClient.NumberVerify.GetAuthURL(types.NumberVerifyAuthUrlInput{UseDevNumber: phoneNumber})
 		fmt.Println("Open this URL on the user's device: ", authUrl)
 		assert.NoError(t, err)
 		assert.NotNil(t, authUrl)
@@ -26,7 +27,8 @@ func TestNumberVerify(t *testing.T) {
 			t.Fatalf("Failed to parse authUrl: %v", err)
 		}
 		query := baseURL.Query()
-		query.Set("login_hint", "tel:+555123456789")
+		// this should be used if not using UseDevNumber in GetAuthURL
+		// query.Set("login_hint", "tel:+555123456789")
 		baseURL.RawQuery = query.Encode()
 		res, _ := MakeRawHttpRequestFollowRedirectChain(baseURL.String())
 		location := res.Headers.Get("Location")
@@ -36,7 +38,6 @@ func TestNumberVerify(t *testing.T) {
 		t.Logf("Code: %s", code)
 		assert.NoError(t, err)
 		assert.NotEmpty(t, code)
-		phoneNumber := "+555123456789"
 		client, err := glideClient.NumberVerify.For(types.NumberVerifyClientForParams{PhoneNumber: &phoneNumber, Code: code})
 		assert.NoError(t, err)
 		verify, err := client.VerifyNumber(nil, types.ApiConfig{SessionIdentifier: "session77"})
