@@ -174,8 +174,9 @@ func (c *NumberVerifyClient) GetAuthURL(opts ...types.NumberVerifyAuthUrlInput) 
 	if len(opts) > 0 && opts[0].UseDevNumber != "" {
 		params.Set("login_hint", "tel:"+opts[0].UseDevNumber)
 	}
-	fmt.Printf("params: %v", params)
-
+	if len(opts) > 0 && opts[0].PrintCode {
+		params.Set("dev_print", "true")
+	}
 	return c.settings.Internal.AuthBaseURL + "/oauth2/auth?" + params.Encode(), nil
 }
 

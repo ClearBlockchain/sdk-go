@@ -98,6 +98,7 @@ type MagicAuthVerifyProps struct {
 type NumberVerifyAuthUrlInput struct {
     State *string `json:"state"`
     UseDevNumber string `json:"useDevNumber,omitempty"`
+    PrintCode bool `json:"printCode,omitempty"`
 }
 
 
